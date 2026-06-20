@@ -24,9 +24,9 @@ client = razorpay.Client(auth=("rzp_test_SzpwcuFklB1Edt", "ziV1BGNR81FgKj0RvPTYE
 
 
 mydb = connection.MySQLConnection(
-    user='root',
+    user='flaskuser',
     host='localhost',
-    password='@harika',
+    password='password',
     db='ecmdb'
 )
 
