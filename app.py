@@ -1716,7 +1716,7 @@ def addreview(itemid):
         if cursor:
             cursor.close()
 
-@app.route('/api/forgotpassword', methods=['POST'])
+@app.route('/api/forgotpassword', methods=['GET','POST'])
 def forgotpassword():
     data = request.get_json()
     f_email = data.get('email')
