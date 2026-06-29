@@ -382,7 +382,7 @@ def viewitem(itemid):
         if not item_data:
             return jsonify({'status':'failed','message':'item not found'}),404
         products = {'itemid':item_data[0],
-                                'itemname': item_data[1],
+                                'item_name': item_data[1],
                                 'item_desc': item_data[2],
                                 'item_about': item_data[3],
                                 'price': float(item_data[4]),
