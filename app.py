@@ -668,9 +668,9 @@ def userotpverify():
         except Exception as e:
             return jsonify({'status': 'failed', 'message': 'invalid or expired token'}), 400
         # otp verification
-        print("Entered OTP:", userotp)
-        print("Stored OTP:", user_details['user_otp'])
-        print("Token:", token)
+        print("Entered OTP:", userotp,flush=True)
+        print("Stored OTP:", user_details['user_otp'],flush=True)
+        print("Token:", token,flush=True)
 
         
         if str(userotp) != str(user_details['user_otp']):
