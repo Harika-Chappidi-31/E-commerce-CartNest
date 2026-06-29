@@ -668,6 +668,11 @@ def userotpverify():
         except Exception as e:
             return jsonify({'status': 'failed', 'message': 'invalid or expired token'}), 400
         # otp verification
+        print("Entered OTP:", userotp)
+        print("Stored OTP:", user_details['user_otp'])
+        print("Token:", token)
+
+        
         if str(userotp) != str(user_details['user_otp']):
             return jsonify({'status': 'failed', 'message': ' invalid OTP'}), 400
         # reconnect automatically if mysql connection lost
