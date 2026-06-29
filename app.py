@@ -585,50 +585,70 @@ def adminlogout():
 def usercreate():
     try:
         data = request.get_json()
-        print(data)
+        print("Request Data:", data)
+
         if not data:
-                    return jsonify({'status': 'failed', 'message': 'No input data'}), 400
+            return jsonify({'status': 'failed', 'message': 'No input data'}), 400
+
         user_name = data.get('username', '').strip()
         user_email = data.get('useremail', '').strip()
         user_address = data.get('useraddress', '').strip()
         user_password = data.get('userpassword', '').strip()
         user_phone = data.get('userphone', '').strip()
         user_gender = data.get('usergender', '').strip()
-        # validation
-        if not user_name:
-            return jsonify({'status': 'failed', 'message': 'Username required'}), 400
+
+        print("Email:", user_email)
+
         email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
         if not re.match(email_pattern, user_email):
             return jsonify({'status': 'failed', 'message': 'Invalid Email'}), 400
-        try:
-            mydb.ping(reconnect=True)
-            cursor = mydb.cursor(buffered=True)
-            cursor.execute('select count(*) from userdata where useremail=%s', [user_email])
-            email_exists = cursor.fetchone()[0]
-            if email_exists > 0:
-                return jsonify({'status': 'failed', 'message': 'Email already registered'}), 400
-        except Exception as e:
-            print("Mysql error ", str(e))
-            return jsonify({'status': 'failed', 'message': str(e)}), 500
-        if len(user_password) < 6:
-            return jsonify({'status': 'failed', 'message': 'password too short'}), 400
-            # hash password - varbinary(255) column so store as bytes, no .decode()
+
+        mydb.ping(reconnect=True)
+        cursor = mydb.cursor(buffered=True)
+
+        cursor.execute(
+            'select count(*) from userdata where useremail=%s',
+            [user_email]
+        )
+
+        if cursor.fetchone()[0] > 0:
+            return jsonify({'status': 'failed', 'message': 'Email already registered'}), 400
+
         hashed_password = bcrypt.generate_password_hash(user_password).decode('utf-8')
+
         gotp = genotp()
+        print("Generated OTP:", gotp)
+
         userdata = {
-            'user_username': user_name, 'user_useremail': user_email,
-            'user_useraddress': user_address,'user_userpassword': hashed_password,
-            'user_phone': user_phone,'user_gender': user_gender,'user_otp': gotp}
-        subject = 'User Registration Verification'
-        body = f'''Hello {user_name},
-        Your OTP is :{gotp}
-        This OTP is valid for 5 minutes.
-        BUYROUTE Team'''
+            'user_username': user_name,
+            'user_useremail': user_email,
+            'user_useraddress': user_address,
+            'user_userpassword': hashed_password,
+            'user_phone': user_phone,
+            'user_gender': user_gender,
+            'user_otp': gotp
+        }
+
+        subject = "User Registration Verification"
+        body = f"""Hello {user_name},
+Your OTP is: {gotp}
+This OTP is valid for 5 minutes.
+BUYROUTE Team"""
+
+        print("Calling send_mail...")
         send_mail(to=user_email, subject=subject, body=body)
+        print("Mail sent successfully.")
+
         token = endata(userdata)
-        return jsonify({'status': 'success', 'message': 'OTP sent successfully', 'token': token}), 200
+
+        return jsonify({
+            'status': 'success',
+            'message': 'OTP sent successfully',
+            'token': token
+        }), 200
+
     except Exception as e:
-        print('Error Occurs: ', str(e))
+        print("Register Error:", str(e))
         return jsonify({'status': 'failed', 'message': str(e)}), 500
     
 @app.route('/api/user/verify-otp', methods=['POST'])
