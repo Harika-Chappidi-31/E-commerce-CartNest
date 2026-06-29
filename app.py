@@ -671,8 +671,7 @@ def userotpverify():
         print("Entered OTP:", userotp,flush=True)
         print("Stored OTP:", user_details['user_otp'],flush=True)
         print("Token:", token,flush=True)
-
-        
+        print("COMPARE RESULT:", str(userotp).strip() == str(user_details['user_otp']).strip(), flush=True)
         if str(userotp) != str(user_details['user_otp']):
             return jsonify({'status': 'failed', 'message': ' invalid OTP'}), 400
         # reconnect automatically if mysql connection lost
