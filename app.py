@@ -1680,38 +1680,73 @@ def descitem(itemid):
     finally:
         if cursor:
             cursor.close()
-
-@app.route('/api/add-review/<itemid>',methods=['POST'])
+            
+@app.route('/api/add-review/<itemid>', methods=['POST'])
 def addreview(itemid):
-    cursor=None
+    cursor = None
     try:
-        #LOGIN CHECK
+        # LOGIN CHECK
         if 'userid' not in session:
-                return jsonify({'status':'failed','message':'pls login first'}),401
-        data=request.get_json()
+            return jsonify({'status': 'failed', 'message': 'Please login first'}), 401
+
+        data = request.get_json()
+
         if not data:
-            return jsonify({'status':'failed','message':'No Input data'}),400
-        rating=data.get('rating')
-        review_text=data.get('review_text')
+            return jsonify({'status': 'failed', 'message': 'No input data'}), 400
+
+        rating = data.get('rating')
+        review_text = data.get('review_text')
+
         if not rating or not review_text:
-            return jsonify({'status':'failed','message':'rating and review required'}),400
-        if int(rating) and int(rating)>5:
-            return jsonify({'status':'failed','message':'rating must be 1 to 5'}),400
-        userid=session.get('userid')
+            return jsonify({'status': 'failed', 'message': 'Rating and review required'}), 400
+
+        rating = int(rating)
+
+        if rating < 1 or rating > 5:
+            return jsonify({'status': 'failed', 'message': 'Rating must be between 1 and 5'}), 400
+
+        userid = session.get('userid')
+
         mydb.ping(reconnect=True)
-        cursor=mydb.cursor(buffered=True)
-        cursor.execute('select count(*) from items where itemid=uuid_to_bin(%s)',[itemid])
-        item_exists=cursor.fetchone()[0]
-        if item_exists==0:
-            return jsonify({'status':'failed','message':'item not found'}),400
-        #-----------------insert review
-        cursor.execute('''insert into reviews(r_id,r_text,rating,itemid,userid) values(uuid_to_bin(uuid()),%s,%s,uuid_to_bin(%s),uuid_to_bin(%s))''',[review_text,rating,itemid,userid])
+        cursor = mydb.cursor(buffered=True)
+
+        # CHECK ITEM EXISTS
+        cursor.execute(
+            'SELECT COUNT(*) FROM items WHERE itemid=UUID_TO_BIN(%s)',
+            [itemid]
+        )
+
+        item_exists = cursor.fetchone()[0]
+
+        if item_exists == 0:
+            return jsonify({'status': 'failed', 'message': 'Item not found'}), 404
+
+        # INSERT REVIEW
+        cursor.execute(
+            '''
+            INSERT INTO reviews
+            (r_id, r_text, rating, itemid, userid)
+            VALUES
+            (UUID_TO_BIN(UUID()), %s, %s, UUID_TO_BIN(%s), UUID_TO_BIN(%s))
+            ''',
+            [review_text, str(rating), itemid, userid]
+        )
+
         mydb.commit()
-        return jsonify({'status':'success','message':'Review added successfully'}),201
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Review added successfully'
+        }), 201
+
     except Exception as e:
         mydb.rollback()
-        print(f'Review Error,{e}')
-        return jsonify({'status':'failed','message':str(e)}),500
+        print("Review Error:", str(e))
+        return jsonify({
+            'status': 'failed',
+            'message': str(e)
+        }), 500
+
     finally:
         if cursor:
             cursor.close()
